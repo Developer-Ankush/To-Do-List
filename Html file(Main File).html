@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart To-Do List with Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .add-task-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            min-width: 200px;
+            transition: border-color 0.3s ease;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .timer-inputs {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .timer-input {
+            width: 60px;
+            padding: 15px 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .timer-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .timer-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .add-btn {
+            padding: 15px 25px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-weight: bold;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            background: white;
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.2s ease;
+            border-left: 5px solid #667eea;
+        }
+
+        .task-item:hover {
+            transform: translateX(5px);
+        }
+
+        .task-item.completed {
+            opacity: 0.7;
+            border-left-color: #4caf50;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .task-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .task-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 100px;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .timer-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+        }
+
+        .start-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .pause-btn {
+            background: #ff9800;
+            color: white;
+        }
+
+        .reset-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .timer-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .timer-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.05);
+        }
+
+        .task-item.timer-active {
+            border-left-color: #4caf50;
+            background: linear-gradient(90deg, rgba(76, 175, 80, 0.1), white);
+        }
+
+        .task-item.timer-finished {
+            border-left-color: #ff9800;
+            background: linear-gradient(90deg, rgba(255, 152, 0, 0.1), white);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+            50% { box-shadow: 0 5px 25px rgba(255, 152, 0, 0.4); }
+            100% { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        }
+
+        .duck-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ffeb3b, #ff9800);
+            color: #333;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            max-width: 300px;
+            animation: duckBounce 0.5s ease-out;
+            border: 3px solid #ff9800;
+        }
+
+        .duck-notification.show {
+            display: block;
+        }
+
+        .duck-notification.hide {
+            display: none;
+        }
+
+        @keyframes duckBounce {
+            0% { transform: translateX(400px) rotate(10deg); opacity: 0; }
+            50% { transform: translateX(-20px) rotate(-5deg); opacity: 1; }
+            100% { transform: translateX(0) rotate(0deg); opacity: 1; }
+        }
+
+        .duck-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .duck-emoji {
+            font-size: 30px;
+            animation: duckWiggle 1s infinite;
+        }
+
+        @keyframes duckWiggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .duck-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #e65100;
+        }
+
+        .duck-message {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .duck-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #e65100;
+        }
+
+        .sound-controls {
+            display: none;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+            font-size: 18px;
+        }
+
+        @media (max-width: 600px) {
+            .add-task-section {
+                flex-direction: column;
+            }
+            
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .timer-controls {
+                align-self: stretch;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Smart To-Do Timer</h1>
+        
+        <div class="add-task-section">
+            <input type="text" class="task-input" placeholder="What do you need to do?" id="taskInput">
+            <div class="timer-inputs">
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <input type="number" class="timer-input" placeholder="0" min="0" max="23" id="hoursInput">
+                    <span class="timer-label">Hours</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <input type="number" class="timer-input" placeholder="0" min="0" max="59" id="minutesInput">
+                    <span class="timer-label">Minutes</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <input type="number" class="timer-input" placeholder="0" min="0" max="59" id="secondsInput">
+                    <span class="timer-label">Seconds</span>
+                </div>
+            </div>
+            <button class="add-btn" onclick="addTask()">Add Task</button>
+        </div>
+
+        <div class="sound-controls">
+            <input type="checkbox" class="sound-toggle" id="soundToggle" checked>
+            <label for="soundToggle" class="sound-label">🔊 Enable Duck Alarm Sound</label>
+        </div>
+
+        <ul class="task-list" id="taskList"></ul>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalTasks">0</div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completedTasks">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="activeTasks">0</div>
+                <div class="stat-label">Active                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duck Notification -->
+    <div class="duck-notification hide" id="duckNotification">
+        <button class="duck-close" onclick="closeDuckNotification()">×</button>
+        <div class="duck-header">
+            <span class="duck-emoji">🦆</span>
+            <span class="duck-title">Quack Alert!</span>
+        </div>
+        <div class="duck-message" id="duckMessage">
+            Time's up! You didn't complete your task on time. Don't worry, keep going! 🦆
+        </div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let taskIdCounter = 1;
+        let timers = {};
+        let duckAudio = null;
+
+        // Create duck alarm sound using Web Audio API
+        function createDuckSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Duck-like sound frequencies
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.2);
+            oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.3);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.4);
+            
+            return { oscillator, gainNode };
+        }
+
+        function playDuckAlarm() {
+            // Always play duck sound - no toggle needed
+            
+            // Play duck sound 3 times
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    createDuckSound();
+                }, i * 500);
+            }
+        }
+
+        function showDuckNotification(taskText) {
+            const notification = document.getElementById('duckNotification');
+            const message = document.getElementById('duckMessage');
+            
+            message.textContent = `🦆 QUACK! Time's up for "${taskText}"! The duck is disappointed you didn't finish on time, but don't give up! 🦆`;
+            
+            notification.className = 'duck-notification show';
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (notification.className.includes('show')) {
+                    closeDuckNotification();
+                }
+            }, 10000);
+        }
+
+        function closeDuckNotification() {
+            document.getElementById('duckNotification').className = 'duck-notification hide';
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const hoursInput = document.getElementById('hoursInput');
+            const minutesInput = document.getElementById('minutesInput');
+            const secondsInput = document.getElementById('secondsInput');
+            
+            const taskText = taskInput.value.trim();
+            const hours = parseInt(hoursInput.value) || 0;
+            const minutes = parseInt(minutesInput.value) || 0;
+            const seconds = parseInt(secondsInput.value) || 0;
+            
+            const totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
+
+            if (!taskText) {
+                alert('Please enter a task!');
+                return;
+            }
+
+            const task = {
+                id: taskIdCounter++,
+                text: taskText,
+                completed: false,
+                totalSeconds: totalSeconds,
+                timeLeft: totalSeconds,
+                timerActive: false,
+                timerFinished: false
+            };
+
+            tasks.push(task);
+            taskInput.value = '';
+            hoursInput.value = '';
+            minutesInput.value = '';
+            secondsInput.value = '';
+            
+            renderTasks();
+            updateStats();
+        }
+
+        function toggleTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                if (task.completed && timers[taskId]) {
+                    stopTimer(taskId);
+                }
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        function deleteTask(taskId) {
+            if (timers[taskId]) {
+                clearInterval(timers[taskId]);
+                delete timers[taskId];
+            }
+            tasks = tasks.filter(t => t.id !== taskId);
+            renderTasks();
+            updateStats();
+        }
+
+        function startTimer(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task || task.completed) return;
+
+            task.timerActive = true;
+            task.timerFinished = false;
+            
+            timers[taskId] = setInterval(() => {
+                task.timeLeft--;
+                
+                if (task.timeLeft <= 0) {
+                    task.timeLeft = 0;
+                    task.timerActive = false;
+                    task.timerFinished = true;
+                    clearInterval(timers[taskId]);
+                    delete timers[taskId];
+                    
+                    // Play duck alarm sound
+                    playDuckAlarm();
+                    
+                    // Show duck notification
+                    showDuckNotification(task.text);
+                    
+                    // Show browser notification if available
+                    if (Notification.permission === 'granted') {
+                        new Notification('🦆 Duck Timer Alert!', {
+                            body: `Time's up for "${task.text}"! The duck is not happy! 🦆`,
+                            icon: '🦆'
+                        });
+                    }
+                }
+                
+                renderTasks();
+            }, 1000);
+            
+            renderTasks();
+        }
+
+        function pauseTimer(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            task.timerActive = false;
+            if (timers[taskId]) {
+                clearInterval(timers[taskId]);
+                delete timers[taskId];
+            }
+            renderTasks();
+        }
+
+        function resetTimer(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            task.timerActive = false;
+            task.timerFinished = false;
+            task.timeLeft = task.totalSeconds;
+            
+            if (timers[taskId]) {
+                clearInterval(timers[taskId]);
+                delete timers[taskId];
+            }
+            renderTasks();
+        }
+
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            if (hours > 0) {
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<li class="empty-state">No tasks yet. Add your first task above! 🎯</li>';
+                return;
+            }
+
+            taskList.innerHTML = tasks.map(task => {
+                const timerDisplay = task.totalSeconds > 0 ? formatTime(task.timeLeft) : '';
+                const hasTimer = task.totalSeconds > 0;
+                
+                let taskClass = 'task-item';
+                if (task.completed) taskClass += ' completed';
+                if (task.timerActive) taskClass += ' timer-active';
+                if (task.timerFinished) taskClass += ' timer-finished';
+
+                return `
+                    <li class="${taskClass}">
+                        <input type="checkbox" class="task-checkbox" 
+                               ${task.completed ? 'checked' : ''} 
+                               onchange="toggleTask(${task.id})">
+                        
+                        <div class="task-content">
+                            <div class="task-text">${task.text}</div>
+                            ${hasTimer ? `
+                                <div class="timer-display">${timerDisplay}</div>
+                                <div class="timer-controls">
+                                    <button class="timer-btn start-btn" 
+                                            onclick="startTimer(${task.id})"
+                                            ${task.timerActive || task.completed || task.timeLeft === 0 ? 'disabled' : ''}>
+                                        Start
+                                    </button>
+                                    <button class="timer-btn pause-btn" 
+                                            onclick="pauseTimer(${task.id})"
+                                            ${!task.timerActive ? 'disabled' : ''}>
+                                        Pause
+                                    </button>
+                                    <button class="timer-btn reset-btn" 
+                                            onclick="resetTimer(${task.id})"
+                                            ${task.completed ? 'disabled' : ''}>
+                                        Reset
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const active = total - completed;
+
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('activeTasks').textContent = active;
+        }
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Allow adding task with Enter key
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Initialize
+        renderTasks();
+        updateStats();
+    </script>
+</body>
+</html>
